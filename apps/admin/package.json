@@ -1,0 +1,25 @@
+{
+  "name": "@bastiao/admin",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001",
+    "lint": "eslint app",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'sem testes ainda'"
+  },
+  "dependencies": {
+    "@bastiao/api-client": "workspace:*",
+    "@bastiao/regras": "workspace:*",
+    "next": "^16.0.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0"
+  }
+}

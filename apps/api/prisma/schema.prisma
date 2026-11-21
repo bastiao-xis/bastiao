@@ -1,0 +1,115 @@
+// Fase 1 · Fundação: unidades, equipe, sessões e auditoria.
+// Convenção: modelos em PascalCase no código, tabelas e colunas em snake_case no banco.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique
+  name      String
+  timezone  String   @default("America/Sao_Paulo")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  staffAccess StaffStoreAccess[]
+  auditLogs   AuditLog[]
+
+  @@map("stores")
+}
+
+enum StaffRole {
+  CASHIER
+  KITCHEN
+  MANAGER
+  OWNER
+
+  @@map("staff_role")
+}
+
+model StaffUser {
+  id               String    @id @default(uuid()) @db.Uuid
+  email            String    @unique
+  name             String
+  passwordHash     String    @map("password_hash")
+  role             StaffRole
+  active           Boolean   @default(true)
+  // Segredo TOTP criptografado (RQ-27). Nulo até o usuário cadastrar o 2FA.
+  totpSecretEnc    String?   @map("totp_secret_enc")
+  totpEnabledAt    DateTime? @map("totp_enabled_at")
+  failedLoginCount Int       @default(0) @map("failed_login_count")
+  lockedUntil      DateTime? @map("locked_until")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  stores   StaffStoreAccess[]
+  sessions StaffSession[]
+
+  @@map("staff_users")
+}
+
+model StaffStoreAccess {
+  staffUserId String   @map("staff_user_id") @db.Uuid
+  storeId     String   @map("store_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  staffUser StaffUser @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@id([staffUserId, storeId])
+  @@index([storeId])
+  @@map("staff_store_access")
+}
+
+model StaffSession {
+  id               String    @id @default(uuid()) @db.Uuid
+  staffUserId      String    @map("staff_user_id") @db.Uuid
+  refreshTokenHash String    @unique @map("refresh_token_hash")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  lastActivityAt   DateTime  @default(now()) @map("last_activity_at")
+  expiresAt        DateTime  @map("expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  userAgent        String?   @map("user_agent")
+  ip               String?
+
+  staffUser StaffUser @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
+
+  @@index([staffUserId])
+  @@map("staff_sessions")
+}
+
+enum ActorType {
+  CUSTOMER
+  STAFF
+  SYSTEM
+  INTEGRATION
+
+  @@map("actor_type")
+}
+
+// Registro de quem fez o quê e quando. Só recebe inserções.
+model AuditLog {
+  id         String    @id @default(uuid()) @db.Uuid
+  storeId    String?   @map("store_id") @db.Uuid
+  actorType  ActorType @map("actor_type")
+  actorId    String?   @map("actor_id")
+  action     String
+  entityType String    @map("entity_type")
+  entityId   String?   @map("entity_id")
+  metadata   Json      @default("{}")
+  ip         String?
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  store Store? @relation(fields: [storeId], references: [id])
+
+  @@index([storeId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}

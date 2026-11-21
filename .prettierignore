@@ -1,0 +1,7 @@
+pnpm-lock.yaml
+docs/
+CLAUDE.md
+**/dist
+**/.next
+**/.expo
+**/migrations/**/*.sql

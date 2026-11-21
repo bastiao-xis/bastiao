@@ -1,0 +1,20 @@
+{
+  "name": "@bastiao/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cliente tipado da API do Bastião.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@bastiao/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "dev": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "lint": "eslint App.tsx index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'sem testes ainda'"
+  },
+  "dependencies": {
+    "@bastiao/api-client": "workspace:*",
+    "@bastiao/regras": "workspace:*",
+    "expo": "~58.0.26",
+    "expo-status-bar": "~58.0.5",
+    "react": "19.3.0",
+    "react-native": "0.88.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0"
+  }
+}

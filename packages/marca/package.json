@@ -1,0 +1,20 @@
+{
+  "name": "@bastiao/marca",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Tokens de design, fontes e poses do Bastião. Preenchido na etapa de Design.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  }
+}
