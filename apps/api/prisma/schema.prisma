@@ -19,8 +19,11 @@ model Store {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  staffAccess StaffStoreAccess[]
-  auditLogs   AuditLog[]
+  staffAccess    StaffStoreAccess[]
+  auditLogs      AuditLog[]
+  stock          IngredientStock[]
+  purchases      Purchase[]
+  stockMovements StockMovement[]
 
   @@map("stores")
 }
@@ -112,4 +115,144 @@ model AuditLog {
   @@index([storeId, createdAt])
   @@index([entityType, entityId])
   @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Fase 2a · Insumos, fornecedores, compras e estoque
+// Quantidades na unidade-base do insumo (g, ml ou un). Custo médio em centavos por unidade-base.
+// ---------------------------------------------------------------------------
+
+enum UnitKind {
+  MASS
+  VOLUME
+  UNIT
+
+  @@map("unit_kind")
+}
+
+// O cadastro do insumo vale para todas as unidades; saldo e custo são por unidade (loja).
+model Ingredient {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  unitKind  UnitKind @map("unit_kind")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  stock         IngredientStock[]
+  purchaseItems PurchaseItem[]
+  movements     StockMovement[]
+
+  @@map("ingredients")
+}
+
+model IngredientStock {
+  storeId      String   @map("store_id") @db.Uuid
+  ingredientId String   @map("ingredient_id") @db.Uuid
+  quantity     Decimal  @default(0) @db.Decimal(14, 3)
+  avgCost      Decimal  @default(0) @map("avg_cost") @db.Decimal(18, 6)
+  minQuantity  Decimal? @map("min_quantity") @db.Decimal(14, 3)
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  store      Store      @relation(fields: [storeId], references: [id])
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@id([storeId, ingredientId])
+  @@map("ingredient_stock")
+}
+
+model Supplier {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  document  String?  // CNPJ ou CPF do fornecedor (dado de empresa, não de cliente)
+  phone     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  purchases Purchase[]
+
+  @@map("suppliers")
+}
+
+enum PurchaseStatus {
+  DRAFT
+  POSTED
+
+  @@map("purchase_status")
+}
+
+// Compra fica em rascunho (editável) até ser lançada. Depois de lançada, não muda.
+model Purchase {
+  id            String         @id @default(uuid()) @db.Uuid
+  storeId       String         @map("store_id") @db.Uuid
+  supplierId    String         @map("supplier_id") @db.Uuid
+  status        PurchaseStatus @default(DRAFT)
+  invoiceNumber String?        @map("invoice_number")
+  purchasedAt   DateTime       @map("purchased_at") @db.Date
+  notes         String?
+  totalCents    Int            @default(0) @map("total_cents")
+  createdById   String         @map("created_by_id") @db.Uuid
+  postedById    String?        @map("posted_by_id") @db.Uuid
+  postedAt      DateTime?      @map("posted_at")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  store    Store          @relation(fields: [storeId], references: [id])
+  supplier Supplier       @relation(fields: [supplierId], references: [id])
+  items    PurchaseItem[]
+
+  @@index([storeId, purchasedAt])
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id           String  @id @default(uuid()) @db.Uuid
+  purchaseId   String  @map("purchase_id") @db.Uuid
+  ingredientId String  @map("ingredient_id") @db.Uuid
+  // Como foi digitado (ex.: 5 kg) e convertido para a unidade-base (5000 g).
+  quantity     Decimal @db.Decimal(14, 3)
+  unit         String
+  baseQuantity Decimal @map("base_quantity") @db.Decimal(14, 3)
+  totalCents   Int     @map("total_cents")
+
+  purchase   Purchase   @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@index([purchaseId])
+  @@map("purchase_items")
+}
+
+enum StockMovementType {
+  PURCHASE
+  ADJUSTMENT
+  WASTE
+  COUNT
+
+  @@map("stock_movement_type")
+}
+
+// Livro do estoque: cada mudança de saldo é um registro. Só recebe inserções.
+model StockMovement {
+  id            String            @id @default(uuid()) @db.Uuid
+  storeId       String            @map("store_id") @db.Uuid
+  ingredientId  String            @map("ingredient_id") @db.Uuid
+  type          StockMovementType
+  quantityDelta Decimal           @map("quantity_delta") @db.Decimal(14, 3)
+  quantityAfter Decimal           @map("quantity_after") @db.Decimal(14, 3)
+  // Custo médio usado para valorizar o movimento e o custo médio depois dele.
+  unitCost      Decimal           @map("unit_cost") @db.Decimal(18, 6)
+  avgCostAfter  Decimal           @map("avg_cost_after") @db.Decimal(18, 6)
+  valueCents    Int               @map("value_cents")
+  reason        String?
+  purchaseId    String?           @map("purchase_id") @db.Uuid
+  actorId       String            @map("actor_id") @db.Uuid
+  createdAt     DateTime          @default(now()) @map("created_at")
+
+  store      Store      @relation(fields: [storeId], references: [id])
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@index([storeId, ingredientId, createdAt])
+  @@index([storeId, type, createdAt])
+  @@map("stock_movements")
 }

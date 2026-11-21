@@ -22,3 +22,14 @@ export function formatarBRL(valor: Centavos): string {
   // Intl usa espaço não separável; normalizamos para espaço comum.
   return formatter.format(valor / 100).replace(/\u00a0/g, ' ');
 }
+
+/**
+ * Lê um valor digitado em reais e devolve centavos. Aceita "200", "200,5", "1.234,56", "R$ 19,90".
+ * Devolve null se o texto não for um valor válido (nunca chuta).
+ */
+export function lerReais(texto: string): Centavos | null {
+  const limpo = texto.replace(/R\$\s?/i, '').trim();
+  if (!/^\d{1,3}(\.\d{3})*(,\d{1,2})?$|^\d+(,\d{1,2})?$/.test(limpo)) return null;
+  const [inteiro, decimal = ''] = limpo.replace(/\./g, '').split(',');
+  return centavos(Number(inteiro) * 100 + Number(decimal.padEnd(2, '0')));
+}

@@ -2,7 +2,7 @@
   "name": "@bastiao/regras",
   "version": "0.0.0",
   "private": true,
-  "description": "Regras de negócio compartilhadas por todos os canais: dinheiro, identificação, preço, combos, ofertas, cashback.",
+  "description": "Regras de neg\u00f3cio compartilhadas por todos os canais: dinheiro, identifica\u00e7\u00e3o, pre\u00e7o, combos, ofertas, cashback.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -16,5 +16,8 @@
   },
   "devDependencies": {
     "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0"
   }
 }

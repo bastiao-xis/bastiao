@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from './config/config.module';
 import { CryptoModule } from './crypto/crypto.module';
 import { HealthController } from './health/health.controller';
+import { InventoryModule } from './inventory/inventory.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { StoresModule } from './stores/stores.module';
@@ -17,6 +18,7 @@ import { StoresModule } from './stores/stores.module';
     AuditModule,
     AuthModule,
     StoresModule,
+    InventoryModule,
   ],
   controllers: [HealthController],
 })
